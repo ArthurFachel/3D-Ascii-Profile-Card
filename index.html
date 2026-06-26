@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>// profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --bg:        #020202;
+    --bg2:       #0a0a0a;
+    --grid:      #2e0030;
+    --green:     #ededed;
+    --green-dim: #9aa0a4;
+    --green-faint:#5a5f63;
+    --hi:        #ffffff;
+    --yellow:    #b84cff;
+    --crimson:   #2e0030;
+    --amber:     #2e0030;
+    --mono: 'Share Tech Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+    --display: 'VT323', var(--mono);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: radial-gradient(120% 90% at 30% 10%, #141414 0%, var(--bg) 60%, #000 100%);
+    color: var(--green);
+    font-family: var(--mono);
+    overflow:hidden;
+    -webkit-font-smoothing:none;
+  }
+
+  .crt-scan{
+    pointer-events:none; position:fixed; inset:0; z-index:50;
+    background: repeating-linear-gradient(
+      to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.28) 3px, rgba(0,0,0,0.28) 4px);
+    mix-blend-mode:multiply;
+  }
+  .crt-glow{
+    pointer-events:none; position:fixed; inset:0; z-index:51;
+    background: radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,0.7) 100%);
+  }
+  .crt-flicker{
+    pointer-events:none; position:fixed; inset:0; z-index:52;
+    background: rgba(46,0,48,0.04);
+    animation: flicker 6s infinite steps(60);
+  }
+  @keyframes flicker{
+    0%,100%{opacity:.10} 7%{opacity:.25} 8%{opacity:.05}
+    20%{opacity:.18} 21%{opacity:.06} 50%{opacity:.14} 70%{opacity:.20} 71%{opacity:.05}
+  }
+
+  .stage{
+    position:relative; z-index:1;
+    height:100%; width:100%;
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(12px, 3vw, 56px);
+    align-items:center;
+    padding: clamp(14px, 3vw, 48px);
+  }
+
+  .ascii-wrap{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:0; height:100%;
+  }
+  #ascii{
+    margin:0;
+    font-family: var(--mono);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    font-size: clamp(5px, 1.15vw, 12px);
+    color: var(--yellow);
+    text-shadow: 0 0 6px rgba(184,76,255,.75), 0 0 18px rgba(184,76,255,.35);
+    white-space: pre;
+    user-select:none;
+  }
+
+  .term-stack{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .term-stack .term{
+    max-width:none;
+  }
+
+  .term{
+    width:100%; max-width: 520px;
+    background: linear-gradient(180deg, rgba(18,0,20,.94), rgba(5,0,7,.94));
+    border:1px solid var(--grid);
+    border-radius:8px;
+    box-shadow: 0 0 0 1px rgba(46,0,48,.45), 0 30px 80px -30px rgba(0,0,0,.9),
+                inset 0 0 60px rgba(46,0,48,.25);
+    overflow:hidden;
+    backdrop-filter: blur(2px);
+  }
+  .term-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; border-bottom:1px solid var(--grid);
+    background: rgba(46,0,48,.95);
+  }
+  .term-title{
+    margin-left:0; font-size:12px; color:var(--green-dim); letter-spacing:.08em;
+  }
+  .term-body{ padding: clamp(16px,2vw,26px); }
+
+  .boot{ color:var(--green-dim); font-size:13px; min-height: 4.2em; margin-bottom:6px; }
+  .boot .ok{ color:var(--green); }
+  .boot .grant{ color:var(--hi); }
+
+  .handle{
+    font-family: var(--display);
+    font-size: clamp(40px, 7vw, 72px);
+    line-height:.85;
+    color: var(--hi);
+    text-shadow: 0 0 10px rgba(255,255,255,.55), 0 0 28px rgba(255,255,255,.2);
+    margin: 6px 0 2px;
+    letter-spacing:.02em;
+  }
+  .role{ color:var(--green); font-size: clamp(14px,1.6vw,17px); }
+  .bio{ color:var(--green-dim); font-size:14px; margin:14px 0 18px; line-height:1.5; }
+
+  .rule{ border:0; border-top:1px dashed var(--grid); margin:16px 0; }
+
+  .links{ display:flex; flex-direction:column; gap:2px; }
+  .link{
+    display:flex; align-items:baseline; gap:10px;
+    padding:9px 10px; border:1px solid transparent; border-radius:5px;
+    color:var(--green); text-decoration:none; font-size:15px;
+    transition: background .12s, border-color .12s, color .12s, transform .12s;
+  }
+  .link .arrow{ color:var(--green-faint); }
+  .link .cmd{ color:var(--green); }
+  .link .val{ margin-left:auto; color:var(--green-dim); font-size:13px; }
+  .link:hover, .link:focus-visible{
+    background: rgba(46,0,48,.35);
+    border-color: var(--green-faint);
+    color: var(--hi); outline:none; transform: translateX(3px);
+  }
+  .link:hover .arrow{ color:var(--amber); }
+  .link:hover .cmd{ color:var(--hi); }
+  .link:hover .val{ color:var(--green); }
+
+  .prompt{ margin-top:18px; color:var(--green-dim); font-size:14px; }
+  .cursor{
+    display:inline-block; width:9px; height:1.05em; transform:translateY(2px);
+    background:var(--green); margin-left:3px;
+    box-shadow:0 0 8px var(--green);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  @media (max-width: 820px){
+    body{ overflow:auto; }
+    .stage{
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      align-content:start; min-height:100%;
+    }
+    #ascii{ font-size: clamp(5px, 2.4vw, 10px); }
+    .term{ margin: 0 auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .crt-flicker, .cursor{ animation:none; }
+  }
+
+  .ascii-status{
+    margin-top: 14px; font-size: 12px; color: var(--green-dim);
+    letter-spacing:.12em; text-transform:uppercase; min-height:1.2em;
+  }
+  .ascii-status a{ color:var(--hi); cursor:pointer; text-decoration:underline; }
+  .ascii-status code{ color:var(--hi); }
+
+  .sprite-track{
+    position:relative;
+    height:86px;
+    overflow:hidden;
+    background:transparent;
+    border:0;
+    margin-bottom:-4px;
+  }
+  .sprite-runner{
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:86px;
+    height:86px;
+    animation:haunterRun 8s linear infinite alternate;
+    pointer-events:none;
+  }
+  .header-sprite{
+    display:block;
+    width:86px;
+    height:auto;
+    image-rendering:pixelated;
+    filter:none;
+    animation:haunterFlip 16s steps(1, end) infinite;
+    transform-origin:center center;
+  }
+  @keyframes haunterRun{
+    from{ left:0; }
+    to{ left:calc(100% - 86px); }
+  }
+  @keyframes haunterFlip{
+    0%, 49.999%{ transform:scaleX(-1); }
+    50%, 100%{ transform:scaleX(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .sprite-runner, .header-sprite{ animation:none; }
+  }
+
+  .music-panel{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:80;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 10px;
+    border:1px solid #b84cff;
+    border-radius:999px;
+    background:rgba(46,0,48,.72);
+    box-shadow:0 0 10px rgba(184,76,255,.25), inset 0 0 18px rgba(46,0,48,.35);
+    backdrop-filter:blur(2px);
+  }
+  .music-panel:hover,
+  .music-panel:focus-within{
+    border-color:#fff;
+    box-shadow:0 0 14px rgba(184,76,255,.45), inset 0 0 18px rgba(46,0,48,.45);
+  }
+  .music-toggle{
+    padding:0;
+    border:0;
+    background:transparent;
+    color:#ededed;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .music-toggle:hover,
+  .music-toggle:focus-visible{
+    outline:none;
+    color:#fff;
+  }
+  .music-toggle.music-on{
+    color:#fff;
+  }
+  .volume-wrap{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:var(--green-dim);
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.06em;
+  }
+  .music-volume{
+    width:92px;
+    height:4px;
+    accent-color:#b84cff;
+    cursor:pointer;
+  }
+  .music-volume:focus-visible{
+    outline:1px solid #fff;
+    outline-offset:4px;
+  }
+
+  @media (max-width: 520px){
+    .music-panel{
+      right:10px;
+      bottom:10px;
+      gap:8px;
+    }
+    .music-volume{ width:72px; }
+  }
+
+</style>
+</head>
+<body>
+  <div class="crt-scan"></div>
+  <div class="crt-glow"></div>
+  <div class="crt-flicker"></div>
+
+  <audio id="bgMusic" preload="auto" loop src="assets/music.mp3"></audio>
+  <div id="musicPanel" class="music-panel" aria-label="Controles de música">
+    <button id="musicToggle" class="music-toggle" type="button" aria-label="Tocar ou pausar música">♪ PLAY</button>
+    <label class="volume-wrap" for="musicVolume">
+      <span id="volumeValue">28%</span>
+      <input id="musicVolume" class="music-volume" type="range" min="0" max="100" value="28" aria-label="Volume da música">
+    </label>
+  </div>
+
+<main class="stage">
+    <section class="ascii-wrap">
+      <pre id="ascii" aria-hidden="true"></pre>
+      <div class="ascii-status" id="status"></div>
+    </section>
+
+    <section class="term-stack" aria-label="cartão de perfil">
+      <div class="sprite-track" aria-hidden="true">
+        <div class="sprite-runner">
+          <img class="header-sprite" src="assets/sprite.gif" alt="">
+        </div>
+      </div>
+      <section class="term">
+      <div class="term-bar">
+        <span class="term-title" id="termTitle">visitor@haunter — bash</span>
+      </div>
+      <div class="term-body">
+        <div class="boot" id="boot"></div>
+        <h1 class="handle" id="handle"></h1>
+        <div class="role" id="role"></div>
+        <p class="bio" id="bio"></p>
+        <hr class="rule">
+        <nav class="links" id="links"></nav>
+        <div class="prompt"><span id="promptText"></span><span class="cursor"></span></div>
+      </div>
+      </section>
+    </section>
+  </main>
+
+<!-- 3D model loaded from assets/model.stl at runtime -->
+
+<script>
+
+/* ============================================================================
+ *  EDITE AQUI  —  É só mudar este bloco para fazer a sua versão do card.
+ *  Nada mais abaixo precisa ser tocado.
+ * ========================================================================== */
+const CONFIG = {
+  // -- Identidade --------------------------------------------------------------
+  termTitle:  "Boa noite @usuario",          // título da barra do terminal
+  handle:     "Usuario",                       // seu nome / apelido (texto grande)
+  role:       "• cargo aqui:)",            // cargo ou tagline
+  bio:        "Biografia",          // uma linha sobre você
+  promptText: "Texto.teste.", // frase no rodapé
+
+  // -- Links (adicione/remova quantos quiser) ----------------------------------
+  links: [
+    { cmd: "github",    val: "Seu_nome", url: "https://github.com/Seu_git_hub" },
+    { cmd: "instagram", val: "Seu_nome",      url: "https://www.instagram.com/seu_instagram" },
+    { cmd: "Linkedin",  val: "Seu_nome", url: "https://www.linkedin.com/in/seu_linkedin" },
+    { cmd: "discord",   val: "Seu_nome",        url: "https://discord.com/users/seu_user" },
+  ],
+
+  // -- Modelo 3D (troque por qualquer .stl em assets/) -------------------------
+  stlUrl: "assets/model.stl",
+
+  /* ---- Ajuste fino da renderização (opcional) ---- */
+  GRID_W: 74, GRID_H: 46,       // resolução da grade ASCII (colunas × linhas)
+  RAMP: " .:-=+*#%@",           // rampa de brilho: do mais escuro ao mais claro
+  AUTO_X: 0.0, AUTO_Y: 1.0,     // rotação automática por eixo
+  DRAG_SENS: 0.45,              // sensibilidade do arrastar
+  INERTIA: 0.93,               // quão longa é a "deriva" depois de soltar
+  TILT_X: -8, TILT_Y: 0,        // inclinação inicial
+  ZOOM: 1.45,                   // escala do modelo
+  POINTS: 9000,                 // nº de pontos amostrados (mais = mais nítido)
+  LIGHT: [0.3, 0.35, 0.9],      // direção da luz [x, y, z]
+  FPS: 30,                      // quadros por segundo
+};
+
+const RAMP = CONFIG.RAMP, RN = RAMP.length;
+
+function parseSTL(buffer){
+  const dv = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  if (buffer.byteLength >= 84){
+    const n = dv.getUint32(80, true);
+    if (84 + n*50 === buffer.byteLength){
+      const tris = new Float32Array(n*9);
+      let o = 84;
+      for (let i=0;i<n;i++){
+        o += 12;
+        for (let k=0;k<9;k++){ tris[i*9+k] = dv.getFloat32(o, true); o += 4; }
+        o += 2;
+      }
+      return tris;
+    }
+  }
+
+  const txt = new TextDecoder().decode(bytes);
+  const verts = [];
+  for (const raw of txt.split("\n")){
+    const l = raw.trim();
+    if (l.startsWith("vertex")){
+      const p = l.split(/\s+/);
+      verts.push(+p[1], +p[2], +p[3]);
+    }
+  }
+  return new Float32Array(verts);
+}
+
+function sampleSurface(tris, target){
+  const nT = tris.length/9;
+  const areas = new Float32Array(nT);
+  const nrm = new Float32Array(nT*3);
+  let totalArea = 0;
+  for (let i=0;i<nT;i++){
+    const a=i*9;
+    const ax=tris[a],ay=tris[a+1],az=tris[a+2];
+    const bx=tris[a+3],by=tris[a+4],bz=tris[a+5];
+    const cx=tris[a+6],cy=tris[a+7],cz=tris[a+8];
+    const e1x=bx-ax,e1y=by-ay,e1z=bz-az;
+    const e2x=cx-ax,e2y=cy-ay,e2z=cz-az;
+    let nx=e1y*e2z-e1z*e2y, ny=e1z*e2x-e1x*e2z, nz=e1x*e2y-e1y*e2x;
+    const len=Math.hypot(nx,ny,nz)||1e-12;
+    areas[i]=len/2; totalArea+=areas[i];
+    nrm[i*3]=nx/len; nrm[i*3+1]=ny/len; nrm[i*3+2]=nz/len;
+  }
+  totalArea = totalArea || 1;
+  const pts=[], pnr=[];
+  for (let i=0;i<nT;i++){
+    const k=Math.max(1, Math.round(target*areas[i]/totalArea));
+    const a=i*9;
+    const ax=tris[a],ay=tris[a+1],az=tris[a+2];
+    const bx=tris[a+3],by=tris[a+4],bz=tris[a+5];
+    const cx=tris[a+6],cy=tris[a+7],cz=tris[a+8];
+    for (let j=0;j<k;j++){
+      let u=Math.random(), v=Math.random();
+      if (u+v>1){ u=1-u; v=1-v; }
+      pts.push(ax+u*(bx-ax)+v*(cx-ax),
+               ay+u*(by-ay)+v*(cy-ay),
+               az+u*(bz-az)+v*(cz-az));
+      pnr.push(nrm[i*3], nrm[i*3+1], nrm[i*3+2]);
+    }
+  }
+  return { pts:new Float32Array(pts), nrm:new Float32Array(pnr) };
+}
+
+function proceduralModel(n){
+  const pts=new Float32Array(n*3), nrm=new Float32Array(n*3);
+  for (let i=0;i<n;i++){
+
+    let x=0,y=0,z=0,d=0;
+    do{ x=Math.random()*2-1; y=Math.random()*2-1; z=Math.random()*2-1; d=x*x+y*y+z*z; }
+    while(d>1||d===0);
+    const inv=1/Math.sqrt(d); x*=inv; y*=inv; z*=inv;
+    const theta=Math.atan2(y,x), phi=Math.acos(z);
+    const spike=Math.pow(Math.abs(Math.sin(4*phi)*Math.cos(4*theta)), 6);
+    const r=0.62+0.4*spike;
+    pts[i*3]=x*r; pts[i*3+1]=y*r; pts[i*3+2]=z*r;
+    nrm[i*3]=x; nrm[i*3+1]=y; nrm[i*3+2]=z;
+  }
+  return { pts, nrm };
+}
+
+function centerScale(tris){
+  let mnx=1e9,mny=1e9,mnz=1e9,mxx=-1e9,mxy=-1e9,mxz=-1e9;
+  for (let i=0;i<tris.length;i+=3){
+    mnx=Math.min(mnx,tris[i]); mxx=Math.max(mxx,tris[i]);
+    mny=Math.min(mny,tris[i+1]); mxy=Math.max(mxy,tris[i+1]);
+    mnz=Math.min(mnz,tris[i+2]); mxz=Math.max(mxz,tris[i+2]);
+  }
+  const cx=(mnx+mxx)/2, cy=(mny+mxy)/2, cz=(mnz+mxz)/2;
+  let maxr=1e-9;
+  for (let i=0;i<tris.length;i+=3){
+    tris[i]-=cx; tris[i+1]-=cy; tris[i+2]-=cz;
+    maxr=Math.max(maxr, Math.hypot(tris[i],tris[i+1],tris[i+2]));
+  }
+  for (let i=0;i<tris.length;i++) tris[i]/=maxr;
+  return tris;
+}
+
+function matMul(A,B){
+  const C=new Float32Array(9);
+  for (let r=0;r<3;r++) for (let c=0;c<3;c++){
+    C[r*3+c]=A[r*3]*B[c]+A[r*3+1]*B[3+c]+A[r*3+2]*B[6+c];
+  }
+  return C;
+}
+function rotMatrix(ax,ay,az){
+  ax*=Math.PI/180; ay*=Math.PI/180; az*=Math.PI/180;
+  const cx=Math.cos(ax),sx=Math.sin(ax),cy=Math.cos(ay),sy=Math.sin(ay),cz=Math.cos(az),sz=Math.sin(az);
+  const Rx=new Float32Array([1,0,0, 0,cx,-sx, 0,sx,cx]);
+  const Ry=new Float32Array([cy,0,sy, 0,1,0, -sy,0,cy]);
+  const Rz=new Float32Array([cz,-sz,0, sz,cz,0, 0,0,1]);
+  return matMul(matMul(Rz,Ry),Rx);
+}
+
+const W=CONFIG.GRID_W, H=CONFIG.GRID_H;
+const asciiEl=document.getElementById("ascii");
+const statusEl=document.getElementById("status");
+let model=null, scale=1, ax=0, ay=0, az=0;
+const light=(()=>{ const [a,b,c]=CONFIG.LIGHT; const n=Math.hypot(a,b,c); return [a/n,b/n,c/n]; })();
+const zbuf=new Float32Array(W*H), bbuf=new Float32Array(W*H);
+
+function setModel(geom){
+  model=geom;
+  scale=Math.min(W/2,H)*0.9*CONFIG.ZOOM;
+}
+
+function renderFrame(){
+  if(!model) return;
+  const R=matMul(rotMatrix(CONFIG.TILT_X,CONFIG.TILT_Y,0), rotMatrix(ax,ay,az));
+  const r0=R[0],r1=R[1],r2=R[2],r3=R[3],r4=R[4],r5=R[5],r6=R[6],r7=R[7],r8=R[8];
+  const lx=light[0],ly=light[1],lz=light[2];
+  zbuf.fill(-Infinity); bbuf.fill(-1);
+  const P=model.pts, N=model.nrm, len=P.length;
+  for (let i=0;i<len;i+=3){
+    const x=P[i],y=P[i+1],z=P[i+2];
+    const px=x*r0+y*r1+z*r2;
+    const py=x*r3+y*r4+z*r5;
+    const pz=x*r6+y*r7+z*r8;
+    let nx=N[i]*r0+N[i+1]*r1+N[i+2]*r2;
+    let ny=N[i]*r3+N[i+1]*r4+N[i+2]*r5;
+    let nz=N[i]*r6+N[i+1]*r7+N[i+2]*r8;
+    if (nz<0){ nx=-nx; ny=-ny; nz=-nz; }
+    const xp=(W/2+scale*px)|0;
+    const yp=(H/2-scale*py*0.5)|0;
+    if (xp<0||xp>=W||yp<0||yp>=H) continue;
+    const cell=yp*W+xp;
+    if (pz>zbuf[cell]){
+      zbuf[cell]=pz;
+      let sh=nx*lx+ny*ly+nz*lz; if(sh<0)sh=0; else if(sh>1)sh=1;
+      bbuf[cell]=sh;
+    }
+  }
+  let out="";
+  for (let yy=0;yy<H;yy++){
+    let row="";
+    for (let xx=0;xx<W;xx++){
+      const b=bbuf[yy*W+xx];
+      if (b<0){ row+=RAMP[0]; }
+      else { let idx=(b*(RN-1))|0; if(idx<0)idx=0; else if(idx>RN-1)idx=RN-1; row+=RAMP[idx]; }
+    }
+    out+= yy? "\n"+row : row;
+  }
+  asciiEl.textContent=out;
+}
+
+let last=0;
+const frameMs=1000/CONFIG.FPS;
+let velAx=0, velAy=0;
+function loop(t){
+  if (t-last>=frameMs){
+    last=t;
+    renderFrame();
+    if(dragging){
+      ax+=velAx; ay+=velAy;
+    } else {
+      velAx*=CONFIG.INERTIA; velAy*=CONFIG.INERTIA;
+      if(Math.abs(velAx)<0.002) velAx=0;
+      if(Math.abs(velAy)<0.002) velAy=0;
+      ax+=velAx + CONFIG.AUTO_X;
+      ay+=velAy + CONFIG.AUTO_Y;
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+function setStatus(html, timeout=2200){
+  if(!statusEl) return;
+  statusEl.innerHTML = html || "";
+  if(timeout) setTimeout(()=>{ statusEl.innerHTML=""; }, timeout);
+}
+
+function loadGeometryFromBuffer(buf){
+  try{
+    let tris=parseSTL(buf);
+    if (!tris.length) throw new Error("vazio");
+    tris=centerScale(tris);
+    setModel(sampleSurface(tris, CONFIG.POINTS));
+    setStatus("modelo 3D carregado ✓");
+    return true;
+  }catch(e){
+    console.error(e);
+    setStatus("STL embutido inválido ou não reconhecido", 3200);
+    return false;
+  }
+}
+
+async function loadModelSTL(){
+  // Loads the 3D model from an external .stl file. Until it arrives (and if it
+  // fails, e.g. opened over file:// without a server) the procedural fallback
+  // model keeps spinning, so the card is never visually broken.
+  setStatus("carregando modelo 3D...", 0);
+  try{
+    const res = await fetch(CONFIG.stlUrl);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const buf = await res.arrayBuffer();
+    loadGeometryFromBuffer(buf);
+  }catch(e){
+    console.warn("STL load failed, keeping procedural model:", e);
+    setStatus("modelo externo indisponível — usando fallback", 3200);
+  }
+}
+
+let dragging=false, lastX=0, lastY=0;
+function pStart(x,y){ dragging=true; lastX=x; lastY=y; velAx=0; velAy=0; asciiEl.style.cursor="grabbing"; }
+function pMove(x,y){
+  if(!dragging) return;
+  const dx=x-lastX, dy=y-lastY; lastX=x; lastY=y;
+  velAy = dx*CONFIG.DRAG_SENS;
+  velAx = -dy*CONFIG.DRAG_SENS;
+  ax+=velAx; ay+=velAy;
+}
+function pEnd(){ dragging=false; asciiEl.style.cursor="grab"; }
+
+asciiEl.style.cursor="grab";
+asciiEl.style.touchAction="none";
+asciiEl.addEventListener("pointerdown", e=>{ e.preventDefault(); asciiEl.setPointerCapture?.(e.pointerId); pStart(e.clientX,e.clientY); });
+window.addEventListener("pointermove", e=> pMove(e.clientX,e.clientY));
+window.addEventListener("pointerup", pEnd);
+window.addEventListener("pointercancel", pEnd);
+
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const GLYPHS="#%&$@/\\|<>=*+ｱｲｳｴｵｶｷｸｹｺｻｼ01#####";
+
+function decrypt(el, text, {delay=0, speed=28, settle=2}={}){
+  return new Promise(resolve=>{
+    if (reduced){ el.textContent=text; resolve(); return; }
+    let frame=0; const reveal=new Array(text.length).fill(0);
+    const start=()=>{
+      const id=setInterval(()=>{
+        let out="";
+        for (let i=0;i<text.length;i++){
+          if (text[i]===" "){ out+=" "; continue; }
+          if (frame>=reveal[i]) out+=text[i];
+          else out+=GLYPHS[(Math.random()*GLYPHS.length)|0];
+        }
+        el.textContent=out;
+
+        if (frame===0) for (let i=0;i<text.length;i++) reveal[i]=i*settle+((Math.random()*6)|0);
+        frame++;
+        if (frame>reveal[text.length-1]+2){ clearInterval(id); el.textContent=text; resolve(); }
+      }, 1000/speed);
+    };
+    delay? setTimeout(start, delay) : start();
+  });
+}
+
+function typeLines(el, lines){
+  return new Promise(resolve=>{
+    if (reduced){ el.innerHTML=lines.map(l=>l.html).join("<br>"); resolve(); return; }
+    let li=0, ci=0, acc="";
+    const tick=()=>{
+      if (li>=lines.length){ resolve(); return; }
+      const line=lines[li];
+      if (ci<=line.text.length){
+        el.innerHTML=acc+line.html.replace(line.text, line.text.slice(0,ci))
+                     .replace(/\u2588?$/,"")+"<span style='opacity:.6'>▌</span>";
+        ci++; setTimeout(tick, 18);
+      } else {
+        acc+=line.html+"<br>"; li++; ci=0; setTimeout(tick, 160);
+      }
+    };
+    tick();
+  });
+}
+
+function buildLinks(){
+  const wrap=document.getElementById("links");
+  CONFIG.links.forEach((lnk,i)=>{
+    const a=document.createElement("a");
+    a.className="link"; a.href=lnk.url; a.target="_blank"; a.rel="noopener noreferrer";
+    a.innerHTML='<span class="arrow">&#10095;</span> <span class="cmd"></span> <span class="val"></span>';
+    wrap.appendChild(a);
+    const cmdEl=a.querySelector(".cmd"), valEl=a.querySelector(".val");
+    decrypt(cmdEl, "open "+lnk.cmd, {delay: i*120, speed:34, settle:1});
+    decrypt(valEl, lnk.val, {delay: 200+i*120, speed:34, settle:1});
+  });
+}
+
+async function run(){
+  document.getElementById("termTitle").textContent=CONFIG.termTitle;
+  document.getElementById("promptText").textContent=CONFIG.promptText;
+
+  const boot=document.getElementById("boot");
+  await typeLines(boot, [
+    { text:"$ ./connect --profile", html:"<span class='ok'>$</span> ./connect --profile" },
+    { text:"decrypting identity...", html:"decrypting identity..." },
+    { text:"access granted", html:"<span class='grant'>access granted</span>" },
+  ]);
+
+  decrypt(document.getElementById("handle"), CONFIG.handle, {speed:30, settle:2});
+  await decrypt(document.getElementById("role"), CONFIG.role, {delay:120, speed:36, settle:1});
+  decrypt(document.getElementById("bio"), CONFIG.bio, {speed:60, settle:1});
+  buildLinks();
+}
+
+setModel(proceduralModel(Math.min(CONFIG.POINTS, 6000)));
+ax = CONFIG.TILT_X;
+ay = -25;
+requestAnimationFrame(loop);
+loadModelSTL();
+run();
+</script>
+
+<script>
+(() => {
+  const music = document.getElementById("bgMusic");
+  const btn = document.getElementById("musicToggle");
+  const panel = document.getElementById("musicPanel");
+  const volume = document.getElementById("musicVolume");
+  const volumeValue = document.getElementById("volumeValue");
+  if (!music || !btn) return;
+
+  function setVolume(value){
+    const normalized = Math.max(0, Math.min(100, Number(value) || 0));
+    music.volume = normalized / 100;
+    if (volume) volume.value = String(normalized);
+    if (volumeValue) volumeValue.textContent = `${normalized}%`;
+  }
+
+  setVolume(28);
+
+  async function playMusic(){
+    try{
+      await music.play();
+      btn.textContent = "♪ ON";
+      btn.classList.add("music-on");
+    }catch(err){
+      btn.textContent = "♪ PLAY";
+      btn.classList.remove("music-on");
+    }
+  }
+
+  function pauseMusic(){
+    music.pause();
+    btn.textContent = "♪ OFF";
+    btn.classList.remove("music-on");
+  }
+
+  panel?.addEventListener("click", event => event.stopPropagation());
+  panel?.addEventListener("touchstart", event => event.stopPropagation());
+
+  volume?.addEventListener("input", event => {
+    setVolume(event.target.value);
+  });
+
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (music.paused) playMusic();
+    else pauseMusic();
+  });
+
+  window.addEventListener("load", playMusic);
+  document.addEventListener("click", () => { if (music.paused) playMusic(); }, { once:true });
+  document.addEventListener("touchstart", () => { if (music.paused) playMusic(); }, { once:true });
+  document.addEventListener("keydown", () => { if (music.paused) playMusic(); }, { once:true });
+})();
+</script>
+
+</body>
+</html>
