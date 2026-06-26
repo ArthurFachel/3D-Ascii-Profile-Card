@@ -1,6 +1,6 @@
 # `// profile` — CRT terminal profile card with a 3D ASCII renderer
 
-> 🌐 [Versão em português](README.md)
+> 🌐 [Versão em português](README.pt.md)
 
 A single-page business card: a terminal with CRT styling (scanlines, flicker and
 glow) next to a **3D model rendered entirely in ASCII** that you can spin with your
