@@ -1,5 +1,7 @@
 # `// profile` — Cartão de perfil com terminal CRT e renderizador 3D em ASCII
 
+🌐 [English version](README.md)
+
 Um cartão de visitas em uma única página: um terminal com estética CRT (scanlines,
 flicker e glow) ao lado de um **modelo 3D renderizado inteiramente em ASCII**, que
 você pode girar com o mouse. Sem Three.js, sem WebGL, sem dependências — só
