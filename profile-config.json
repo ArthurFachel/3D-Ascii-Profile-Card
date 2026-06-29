@@ -1,0 +1,51 @@
+{
+  "termTitle": "Good to see you, traveler",
+  "handle": "Arthur Fachel",
+  "role": "Undergrad Research Assistant",
+  "bio": "Data Science at PUCRS, Machine Learning and data visualization",
+  "promptText": "Hiii!",
+  "links": [
+    {
+      "cmd": "github",
+      "val": "ArthurFachel",
+      "url": "https://github.com/Seu_git_hub"
+    },
+    {
+      "cmd": "Linkedin",
+      "val": "Arthur Fachel",
+      "url": "https://www.linkedin.com/in/arthur-fachel-801218176/"
+    },
+    {
+      "cmd": "discord",
+      "val": "lampejo__",
+      "url": ""
+    }
+  ],
+  "stlUrl": "assets/model.stl",
+  "spriteUrl": "assets/sprite.gif",
+  "GRID_W": 74,
+  "GRID_H": 46,
+  "RAMP": " .:-=+*#%@",
+  "AUTO_X": 1,
+  "AUTO_Y": 0,
+  "DRAG_SENS": 0.45,
+  "INERTIA": 0.93,
+  "TILT_X": 50,
+  "TILT_Y": -60,
+  "ZOOM": 1.3,
+  "POINTS": 9000,
+  "LIGHT": [
+    0.3,
+    0.35,
+    0.9
+  ],
+  "FPS": 30,
+  "themeHue": 360,
+  "accentColor": "#f99eff",
+  "showAscii": true,
+  "showSprite": true,
+  "showMusicPanel": true,
+  "showLinks": true,
+  "asciiStatusText": "ascii~3d_renderer loaded",
+  "layoutMode": "auto"
+}

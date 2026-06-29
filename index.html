@@ -721,7 +721,7 @@ function buildLinks(){
     a.innerHTML='<span class="arrow">&#10095;</span> <span class="cmd"></span> <span class="val"></span>';
     wrap.appendChild(a);
     const cmdEl=a.querySelector(".cmd"), valEl=a.querySelector(".val");
-    decrypt(cmdEl, "open "+lnk.cmd, {delay: i*120, speed:34, settle:1});
+    decrypt(cmdEl, ""+lnk.cmd, {delay: i*120, speed:34, settle:1});
     decrypt(valEl, lnk.val, {delay: 200+i*120, speed:34, settle:1});
   });
 }
