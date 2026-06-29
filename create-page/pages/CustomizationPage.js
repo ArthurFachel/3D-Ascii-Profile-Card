@@ -170,6 +170,17 @@ function CustomizationPage() {
     const layoutClass = cfg.layoutMode === "stacked" ? "layout-stacked" : cfg.layoutMode === "side-by-side" ? "layout-side-by-side" : "";
     const showAscii = cfg.showAscii;
 
+    // STL saved by the STL Uploader (localStorage 'daedalus:stl', base64).
+    // Inlined into the preview so the blob: iframe can load it WITHOUT fetch().
+    let stlB64 = "";
+    try {
+      const _rawStl = localStorage.getItem("daedalus:stl");
+      if (_rawStl) {
+        const _p = JSON.parse(_rawStl);
+        if (_p && _p.inline && _p.data) stlB64 = _p.data;
+      }
+    } catch (_) { /* ignore */ }
+
     const spriteHTML = cfg.showSprite ? `
       <div class="sprite-track" aria-hidden="true">
         <div class="sprite-runner">
@@ -250,6 +261,7 @@ ${cfg.showLinks ? (cfg.links||[]).map(l=>`<a class="link" href="${l.url}" target
 <script>
 const RAMP=${rampJSON}, RN=RAMP.length;
 const CFG={GRID_W:${cfg.GRID_W},GRID_H:${cfg.GRID_H},AUTO_X:${cfg.AUTO_X},AUTO_Y:${cfg.AUTO_Y},DRAG_SENS:${cfg.DRAG_SENS},INERTIA:${cfg.INERTIA},TILT_X:${cfg.TILT_X},TILT_Y:${cfg.TILT_Y},ZOOM:${cfg.ZOOM},POINTS:${cfg.POINTS},LIGHT:${lightJSON},FPS:${cfg.FPS},stlUrl:"${cfg.stlUrl}"};
+const STL_B64=${JSON.stringify(stlB64)};
 function parseSTL(buf){const dv=new DataView(buf),n=dv.getUint32(80,true);if(buf.byteLength>=84&&84+n*50===buf.byteLength){const tris=new Float32Array(n*9);let o=84;for(let i=0;i<n;i++){o+=12;for(let k=0;k<9;k++){tris[i*9+k]=dv.getFloat32(o,true);o+=4;}o+=2;}return tris;}const txt=new TextDecoder().decode(new Uint8Array(buf)),verts=[];for(const raw of txt.split("\\n")){const l=raw.trim();if(l.startsWith("vertex")){const p=l.split(/\\s+/);verts.push(+p[1],+p[2],+p[3]);}}return new Float32Array(verts);}
 function sampleSurface(tris,target){const nT=tris.length/9;const areas=new Float32Array(nT);const nrm=new Float32Array(nT*3);let totalArea=0;for(let i=0;i<nT;i++){const a=i*9,ax=tris[a],ay=tris[a+1],az=tris[a+2],bx=tris[a+3],by=tris[a+4],bz=tris[a+5],cx=tris[a+6],cy=tris[a+7],cz=tris[a+8];const e1x=bx-ax,e1y=by-ay,e1z=bz-az,e2x=cx-ax,e2y=cy-ay,e2z=cz-az;let nx=e1y*e2z-e1z*e2y,ny=e1z*e2x-e1x*e2z,nz=e1x*e2y-e1y*e2x;const len=Math.hypot(nx,ny,nz)||1e-12;areas[i]=len/2;totalArea+=areas[i];nrm[i*3]=nx/len;nrm[i*3+1]=ny/len;nrm[i*3+2]=nz/len;}totalArea=totalArea||1;const pts=[],pnr=[];for(let i=0;i<nT;i++){const k=Math.max(1,Math.round(target*areas[i]/totalArea));const a=i*9,ax=tris[a],ay=tris[a+1],az=tris[a+2],bx=tris[a+3],by=tris[a+4],bz=tris[a+5],cx=tris[a+6],cy=tris[a+7],cz=tris[a+8];for(let j=0;j<k;j++){let u=Math.random(),v=Math.random();if(u+v>1){u=1-u;v=1-v;}pts.push(ax+u*(bx-ax)+v*(cx-ax),ay+u*(by-ay)+v*(cy-ay),az+u*(bz-az)+v*(cz-az));pnr.push(nrm[i*3],nrm[i*3+1],nrm[i*3+2]);}}return{pts:new Float32Array(pts),nrm:new Float32Array(pnr)};}
 function proceduralModel(n){const pts=new Float32Array(n*3),nrm=new Float32Array(n*3);for(let i=0;i<n;i++){let x=0,y=0,z=0,d=0;do{x=Math.random()*2-1;y=Math.random()*2-1;z=Math.random()*2-1;d=x*x+y*y+z*z;}while(d>1||d===0);const inv=1/Math.sqrt(d);x*=inv;y*=inv;z*=inv;const theta=Math.atan2(y,x),phi=Math.acos(z),spike=Math.pow(Math.abs(Math.sin(4*phi)*Math.cos(4*theta)),6);const r=0.62+0.4*spike;pts[i*3]=x*r;pts[i*3+1]=y*r;pts[i*3+2]=z*r;nrm[i*3]=x;nrm[i*3+1]=y;nrm[i*3+2]=z;}return{pts,nrm};}
@@ -257,6 +269,8 @@ function centerScale(tris){let mnx=1e9,mny=1e9,mnz=1e9,mxx=-1e9,mxy=-1e9,mxz=-1e
 function matMul(A,B){const C=new Float32Array(9);for(let r=0;r<3;r++)for(let c=0;c<3;c++)C[r*3+c]=A[r*3]*B[c]+A[r*3+1]*B[3+c]+A[r*3+2]*B[6+c];return C;}
 function rotMatrix(ax,ay,az){ax*=Math.PI/180;ay*=Math.PI/180;az*=Math.PI/180;const cx=Math.cos(ax),sx=Math.sin(ax),cy=Math.cos(ay),sy=Math.sin(ay),cz=Math.cos(az),sz=Math.sin(az);const Rx=new Float32Array([1,0,0,0,cx,-sx,0,sx,cx]),Ry=new Float32Array([cy,0,sy,0,1,0,-sy,0,cy]),Rz=new Float32Array([cz,-sz,0,sz,cz,0,0,0,1]);return matMul(matMul(Rz,Ry),Rx);}
 const W=CFG.GRID_W,H=CFG.GRID_H,asciiEl=document.getElementById("ascii");
+function fitAscii(){if(!asciiEl)return;var wrap=asciiEl.parentElement;if(!wrap)return;var aw=wrap.clientWidth,ah=wrap.clientHeight;if(!aw||!ah)return;asciiEl.style.fontSize="10px";var cw=asciiEl.scrollWidth||1,ch=asciiEl.scrollHeight||1;var fs=10*Math.min(aw/cw,ah/ch);if(fs<3)fs=3;if(fs>16)fs=16;asciiEl.style.fontSize=fs+"px";}
+window.addEventListener("resize",fitAscii);
 let model=null,scale=1,ax=0,ay=0,az=0;const light=(()=>{const[a,b,c]=CFG.LIGHT;const n=Math.hypot(a,b,c);return[a/n,b/n,c/n];})();const zbuf=new Float32Array(W*H),bbuf=new Float32Array(W*H);
 function setModel(geom){model=geom;scale=Math.min(W/2,H)*0.9*CFG.ZOOM;}
 function renderFrame(){if(!model||!asciiEl)return;const R=matMul(rotMatrix(CFG.TILT_X,CFG.TILT_Y,0),rotMatrix(ax,ay,az));const r0=R[0],r1=R[1],r2=R[2],r3=R[3],r4=R[4],r5=R[5],r6=R[6],r7=R[7],r8=R[8];const lx=light[0],ly=light[1],lz=light[2];zbuf.fill(-Infinity);bbuf.fill(-1);const P=model.pts,N=model.nrm,len=P.length;for(let i=0;i<len;i+=3){const x=P[i],y=P[i+1],z=P[i+2];const px=x*r0+y*r1+z*r2;const py=x*r3+y*r4+z*r5;const pz=x*r6+y*r7+z*r8;let nx=N[i]*r0+N[i+1]*r1+N[i+2]*r2;let ny=N[i]*r3+N[i+1]*r4+N[i+2]*r5;let nz=N[i]*r6+N[i+1]*r7+N[i+2]*r8;if(nz<0){nx=-nx;ny=-ny;nz=-nz;}const xp=(W/2+scale*px)|0;const yp=(H/2-scale*py*0.5)|0;if(xp<0||xp>=W||yp<0||yp>=H)continue;const cell=yp*W+xp;if(pz>zbuf[cell]){zbuf[cell]=pz;let sh=nx*lx+ny*ly+nz*lz;if(sh<0)sh=0;else if(sh>1)sh=1;bbuf[cell]=sh;}}let out="";for(let yy=0;yy<H;yy++){let row="";for(let xx=0;xx<W;xx++){const b=bbuf[yy*W+xx];if(b<0){row+=RAMP[0];}else{let idx=(b*(RN-1))|0;if(idx<0)idx=0;else if(idx>RN-1)idx=RN-1;row+=RAMP[idx];}}out+=yy?"\\n"+row:row;}asciiEl.textContent=out;}
@@ -267,7 +281,10 @@ let dragging=false,lastX=0,lastY=0;function pStart(x,y){dragging=true;lastX=x;la
 function pMove(x,y){if(!dragging)return;const dx=x-lastX,dy=y-lastY;lastX=x;lastY=y;velAy=dx*CFG.DRAG_SENS;velAx=-dy*CFG.DRAG_SENS;ax+=velAx;ay+=velAy;}
 function pEnd(){dragging=false;asciiEl.style.cursor="grab";}
 if(asciiEl){asciiEl.style.cursor="grab";asciiEl.style.touchAction="none";asciiEl.addEventListener("pointerdown",e=>{e.preventDefault();asciiEl.setPointerCapture?.(e.pointerId);pStart(e.clientX,e.clientY);});window.addEventListener("pointermove",e=>pMove(e.clientX,e.clientY));window.addEventListener("pointerup",pEnd);window.addEventListener("pointercancel",pEnd);}
-setModel(proceduralModel(Math.min(CFG.POINTS,6000)));ax=CFG.TILT_X;ay=-25;requestAnimationFrame(loop);loadModelSTL();
+function b64ToBuf(b64){var bin=atob(b64);var n=bin.length;var bytes=new Uint8Array(n);for(var i=0;i<n;i++)bytes[i]=bin.charCodeAt(i);return bytes.buffer;}
+setModel(proceduralModel(Math.min(CFG.POINTS,6000)));ax=CFG.TILT_X;ay=-25;requestAnimationFrame(loop);
+if(STL_B64){try{loadGeometryFromBuffer(b64ToBuf(STL_B64));}catch(e){console.warn("inline STL failed",e);loadModelSTL();}}else{loadModelSTL();}
+requestAnimationFrame(function(){requestAnimationFrame(fitAscii);});setTimeout(fitAscii,120);setTimeout(fitAscii,400);
 </script>
 </body>
 </html>`;
